@@ -1,66 +1,47 @@
+import { useDispatch, useSelector } from "react-redux";
 import { User, UserCreate } from "./interface/user.interface"
 import { useEffect, useState } from "react";
+import { userActions } from "./store/slice/user.slice";
+import './App.scss'
+import Navbar from "./components/Nav/Navbar";
+import TableUser from "./components/Table/Table";
+import Input from "./components/Input/Input";
 function App() {
+  const userStore = useSelector(store => (store as any).userStore);
   const [players, setPlayers] = useState<User[]>([]);
-  useEffect(()=>{
-    if(localStorage.getItem("players")){
+  const dispatch = useDispatch();
+  const [scoreMax, setScoreMax] = useState(0);
+  useEffect(() => {
+    if (localStorage.getItem("players")) {
       setPlayers(JSON.parse(localStorage.getItem("players")!))
+      dispatch(userActions.setData(players))
+      getScoreMax()
     }
-  }, [])
+  }, [userStore])
+  function getScoreMax() {
+    setScoreMax(Math.max(...players.map((player: User) => player.score)))
+  }
+
   function addUser(user: UserCreate) {
-    console.log(user.name)
     players.push({
       id: Date.now() * Math.random(),
       name: user.name,
       score: 0,
     });
-    setPlayers(players);
     localStorage.setItem("players", JSON.stringify(players));
-
+    dispatch(userActions.setData(players))
+    setPlayers(players);
   }
   return (
-    <>
-      <header>
-        <h1> Bảng Điểm</h1>
-      </header>
-      <table className="table">
-        <tbody>
-          {
-            players.map((player, i) => {
-              return (
-                <tr key={player.id}>
-                  <td scope="row">{i+1}</td>
-                  <td><i className="fa-regular fa-star"></i></td>
-                  <td>{player.name}</td>
-                  <td>{player.score}</td>
-                  <td>X</td>
-                </tr>
-              )
-            })
-          }
-          <tr>
-            <th scope="row">1</th>
-            <td><i className="fa-regular fa-star"></i></td>
-            <td>Mark</td>
-            <td>Otto</td>
-            <td>@mdo</td>
-          </tr>
-
-        </tbody>
-      </table>
-      <div className="Create">
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          addUser((e.target as any).name.value);
-        }}>
-          <input type="text" name="name" />
-          <button type="submit">
-            Add
-          </button>
-        </form>
-
+    <div className="App">
+      <div className="content">
+        <Navbar players={players} />
+        <TableUser players={players} setPlayers={setPlayers} scoreMax={scoreMax} setScoreMax={setScoreMax} />
+        {players.length == 0 && <h2>No Player</h2>}
+        <Input addUser={addUser} />
       </div>
-    </>
+    </div>
+
   )
 }
 
